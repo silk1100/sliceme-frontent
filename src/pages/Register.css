@@ -1,0 +1,148 @@
+.register-page {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle,
+    var(--dot-color-dark) var(--dot-r),
+    transparent var(--dot-r)
+  );
+  background-size: var(--dot-size) var(--dot-size);
+  color: var(--ink);
+  font-family: 'ABCOracle', 'Georgia', serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.register-page .logo {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: lowercase;
+  color: var(--ink);
+  user-select: none;
+  opacity: 0;
+  animation: fadeOnly 0.6s ease forwards 0.1s;
+}
+
+.register-page main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding-top: 60px;
+}
+
+.register-page .form-wrap {
+  width: 678px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  animation: fadeUp 0.7s ease forwards 0.3s;
+}
+
+.register-page .field {
+  background: var(--bg-field);
+  border: none;
+  outline: none;
+  width: 678px;
+  height: 77px;
+  padding: 0 24px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  border-radius: var(--radius);
+  transition: background 0.2s;
+}
+
+.register-page .field::placeholder {
+  color: var(--ink-placeholder);
+}
+
+.register-page .field:focus {
+  background: var(--bg-drop-hover);
+}
+
+.register-page .btn-register {
+  background: var(--bg-btn);
+  border: none;
+  width: 678px;
+  height: 77px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.register-page .btn-register:hover:not(:disabled) {
+  background: var(--bg-btn-hover);
+}
+
+.register-page .btn-register:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.register-page .error-message {
+  color: #ff7a7a;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
+}
+
+.register-page .success-message {
+  color: #7aff7a;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 8px 0;
+}
+
+.register-page .login-link {
+  margin-top: 24px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  opacity: 0;
+  animation: fadeUp 0.7s ease forwards 0.5s;
+}
+
+.register-page .login-link a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.register-page .login-link a:hover {
+  text-decoration: underline;
+}
+
+@keyframes fadeOnly {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}

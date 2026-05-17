@@ -1,0 +1,144 @@
+.catalog-page {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--bg);
+  background-image: radial-gradient(
+    circle,
+    var(--dot-color-dark) var(--dot-r),
+    transparent var(--dot-r)
+  );
+  background-size: var(--dot-size) var(--dot-size);
+  color: var(--ink);
+  font-family: 'ABCOracle', 'Georgia', serif;
+  min-height: 100vh;
+  display: flex;
+}
+
+.catalog-page main {
+  flex: 1;
+  padding: 32px 32px 32px 28px;
+  overflow-y: auto;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, var(--card-w));
+  gap: var(--card-gap);
+}
+
+.card {
+  width: var(--card-w);
+  height: var(--card-h);
+  background: var(--card-bg);
+  border-radius: var(--card-radius);
+  border: 2px solid transparent;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+  opacity: 0;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.card:hover {
+  border-color: var(--card-border);
+}
+
+.card.selected {
+  border-color: var(--card-border);
+  box-shadow: 0 0 0 0px var(--card-border);
+}
+
+.card-title {
+  font-size: 22.75px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--ink-dark);
+  letter-spacing: 0;
+}
+
+.card-date {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-light);
+}
+
+.card-status {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 2px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.card-status.pending {
+  background: rgba(196, 168, 154, 0.3);
+  color: var(--ink-light);
+}
+
+.card-status.processing {
+  background: rgba(0, 166, 244, 0.2);
+  color: var(--slice-blue);
+}
+
+.card-status.completed {
+  background: rgba(0, 196, 140, 0.2);
+  color: var(--slice-green);
+}
+
+.card-status.failed {
+  background: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+}
+
+.card.processing {
+  opacity: 0.8;
+}
+
+.card.failed {
+  opacity: 0.6;
+}
+
+.loading {
+  color: var(--ink-dim);
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--ink-dim);
+  padding: 60px 20px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.empty-state button {
+  background: var(--bg-btn);
+  color: var(--ink);
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.empty-state button:hover {
+  background: var(--bg-btn-hover);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

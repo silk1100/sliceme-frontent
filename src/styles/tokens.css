@@ -1,0 +1,53 @@
+:root {
+  /* Backgrounds */
+  --bg:              #725656;
+  --bg-light:        #F4EFDC;
+  --bg-sidebar:      #694D4D;
+  --bg-drop-hover:   #5e4545;
+  --bg-field:        #694D4D;
+  --bg-btn:          #694D4D;
+  --bg-btn-hover:    #5e4545;
+  --bg-dropzone:     #694D4D;
+
+  /* Text */
+  --ink:             #F4EFDC;
+  --ink-dark:        #725656;
+  --ink-dim:         #c4a89a;
+  --ink-muted:       #9a7878;
+  --ink-placeholder: rgba(244, 239, 220, 0.75);
+  --ink-light:       #9a7a7a;
+
+  /* Cards */
+  --card-bg:         #E7F4BB;
+  --card-border:     #00A6F4;
+  --card-w:          317px;
+  --card-h:          229px;
+  --card-radius:     2px;
+  --card-gap:        24px;
+
+  /* Editor */
+  --slice-green:     #00C48C;
+  --slice-blue:      #00A6F4;
+
+  /* Dot grid */
+  --dot-color-dark:  #9e7a7a;
+  --dot-color-light: #c8bfa8;
+  --dot-size:        22px;
+  --dot-r:           1.5px;
+
+  /* Layout */
+  --radius:          2px;
+  --sidebar-w:       71px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: 'ABCOracle', 'Georgia', serif;
+}
