@@ -277,6 +277,31 @@
   background: #00a87a;
 }
 
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.view-editor-btn {
+  background: var(--bg-btn);
+  color: var(--ink);
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+
+.view-editor-btn:hover {
+  background: var(--bg-btn-hover);
+}
+
 .status {
   display: flex;
   align-items: center;

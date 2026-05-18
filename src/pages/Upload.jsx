@@ -309,10 +309,6 @@ export default function Upload() {
     });
   };
 
-  const handleViewInCatalog = () => {
-    navigate('/catalog');
-  };
-
   if (authLoading) {
     return (
       <div className="upload-page">
@@ -384,7 +380,21 @@ export default function Upload() {
                       </div>
                     )}
                     {upload.status === 'success' && (
-                      <div className="status success">Done</div>
+                      <div className="success-actions">
+                        <div className="status success">Done</div>
+                        <button
+                          className="view-editor-btn"
+                          onClick={() => navigate(`/editor/${upload.taskId}`, {
+                            state: {
+                              imageDataUrl: upload.imageDataUrl,
+                              filename: upload.file?.name || 'image.png',
+                              result: upload.result
+                            }
+                          })}
+                        >
+                          View Editor
+                        </button>
+                      </div>
                     )}
                     {upload.status === 'error' && (
                       <div className="status error" title={upload.error}>
@@ -411,11 +421,7 @@ export default function Upload() {
           </div>
         )}
 
-        {uploads.some(u => u.status === 'success') && (
-          <button className="view-catalog-btn" onClick={handleViewInCatalog}>
-            View in Catalog
-          </button>
-        )}
+        
 
         <input
           ref={fileInputRef}
