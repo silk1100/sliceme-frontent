@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import JSZip from 'jszip';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../hooks/useAuth';
@@ -43,11 +43,29 @@ export default function Editor() {
     boxIndex: null
   });
 
-  // Load data from localStorage
+  // Load data - now uses navigation state or shows error for memory-only storage
+  const location = useLocation();
+  const passedData = location.state;
+
   useEffect(() => {
+    // First try to get data from navigation state (passed from Upload page)
+    if (passedData && passedData.imageDataUrl) {
+      setImageData(passedData);
+      setDetections(passedData.result?.detections || []);
+
+      const visibility = {};
+      (passedData.result?.detections || []).forEach((_, idx) => {
+        visibility[idx] = true;
+      });
+      setVisibleBoxes(visibility);
+      setLoading(false);
+      return;
+    }
+
+    // Fall back to localStorage (for backward compatibility)
     const stored = localStorage.getItem(`slice_image_${taskId}`);
     if (!stored) {
-      setError('Image not found. Please re-upload the image.');
+      setError('Image not found. Using memory-only storage - please use Editor in the same session after uploading.');
       setLoading(false);
       return;
     }
@@ -67,7 +85,7 @@ export default function Editor() {
     }
 
     setLoading(false);
-  }, [taskId]);
+  }, [taskId, passedData]);
 
   // Draw canvas when data changes
   useEffect(() => {
@@ -315,19 +333,20 @@ export default function Editor() {
     }
   };
 
-  // Handle mouse up - save to localStorage and send to backend
+  // Handle mouse up - save detections to backend
   const handleMouseUp = async () => {
     if (!dragState.isDragging && !dragState.isResizing) return;
 
+    // REMOVED - Using memory-only storage
     // Save to localStorage
-    try {
-      const key = `slice_image_${taskId}`;
-      const data = JSON.parse(localStorage.getItem(key));
-      data.result.detections = detections;
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (e) {
-      console.error('Failed to save to localStorage:', e);
-    }
+    // try {
+    //   const key = `slice_image_${taskId}`;
+    //   const data = JSON.parse(localStorage.getItem(key));
+    //   data.result.detections = detections;
+    //   localStorage.setItem(key, JSON.stringify(data));
+    // } catch (e) {
+    //   console.error('Failed to save to localStorage:', e);
+    // }
 
     // Send to backend
     if (session?.access_token) {

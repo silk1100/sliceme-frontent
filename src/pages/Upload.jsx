@@ -24,30 +24,32 @@ export default function Upload() {
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
 
+  // COMMENTED OUT - Using memory-only storage (localStorage quota exceeded issue)
   // Load saved uploads from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          console.log('[UPLOAD] Restored uploads from localStorage:', parsed.length);
-          setUploads(parsed);
-        }
-      } catch (e) {
-        console.error('[UPLOAD] Failed to load saved uploads:', e);
-      }
-    }
-  }, []);
+  // useEffect(() => {
+  //   const saved = localStorage.getItem(STORAGE_KEY);
+  //   if (saved) {
+  //     try {
+  //       const parsed = JSON.parse(saved);
+  //       if (Array.isArray(parsed) && parsed.length > 0) {
+  //         console.log('[UPLOAD] Restored uploads from localStorage:', parsed.length);
+  //         setUploads(parsed);
+  //       }
+  //     } catch (e) {
+  //       console.error('[UPLOAD] Failed to load saved uploads:', e);
+  //     }
+  //   }
+  // }, []);
 
+  // COMMENTED OUT - Using memory-only storage (localStorage quota exceeded issue)
   // Save uploads to localStorage whenever they change
-  useEffect(() => {
-    if (uploads.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(uploads));
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [uploads]);
+  // useEffect(() => {
+  //   if (uploads.length > 0) {
+  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(uploads));
+  //   } else {
+  //     localStorage.removeItem(STORAGE_KEY);
+  //   }
+  // }, [uploads]);
 
   // Timer update - runs every second
   useEffect(() => {
@@ -134,11 +136,13 @@ export default function Upload() {
                 createdAt: new Date().toISOString()
               };
 
-              try {
-                localStorage.setItem(`slice_image_${upload.taskId}`, JSON.stringify(imageData));
-              } catch (e) {
-                console.warn('[POLL] localStorage error:', e);
-              }
+              // REMOVED - Using memory-only storage (localStorage quota exceeded issue)
+              // The image data stays in React state instead
+              // try {
+              //   localStorage.setItem(`slice_image_${upload.taskId}`, JSON.stringify(imageData));
+              // } catch (e) {
+              //   console.warn('[POLL] localStorage error:', e);
+              // }
 
               // Update this specific upload to success
               setUploads(prev => prev.map(u => 
@@ -297,9 +301,10 @@ export default function Upload() {
   const handleRemove = (uploadId) => {
     setUploads(prev => {
       const upload = prev.find(u => u.id === uploadId);
-      if (upload?.taskId) {
-        localStorage.removeItem(`slice_image_${upload.taskId}`);
-      }
+      // REMOVED - Using memory-only storage
+      // if (upload?.taskId) {
+      //   localStorage.removeItem(`slice_image_${upload.taskId}`);
+      // }
       return prev.filter(u => u.id !== uploadId);
     });
   };

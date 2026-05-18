@@ -22,45 +22,22 @@ export default function Catalog() {
         return;
       }
 
-      // First try to fetch from API
+      // Try to fetch from API
       try {
         const data = await fetchPredictions(session.access_token);
         if (data.predictions && data.predictions.length > 0) {
           setPredictions(data.predictions);
-          setLoading(false);
-          return;
+        } else {
+          // No predictions from API - show empty state
+          setPredictions([]);
         }
       } catch (err) {
-        console.warn('API fetch failed, falling back to localStorage:', err.message);
+        console.warn('API fetch failed:', err.message);
+        // Show error but don't show fallback since we're using memory-only storage
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-
-      // Fall back to localStorage
-      const storedPredictions = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('slice_image_')) {
-          const taskId = key.replace('slice_image_', '');
-          try {
-            const storedData = JSON.parse(localStorage.getItem(key));
-            storedPredictions.push({
-              task_id: taskId,
-              original_filename: storedData.filename || 'Unknown',
-              status: 'completed',
-              created_at: storedData.createdAt || new Date().toISOString()
-            });
-          } catch (e) {
-            console.warn('Failed to parse localStorage item:', key);
-          }
-        }
-      }
-
-      // Sort by created_at descending
-      storedPredictions.sort((a, b) => 
-        new Date(b.created_at) - new Date(a.created_at)
-      );
-
-      setPredictions(storedPredictions);
-      setLoading(false);
     }
 
     loadPredictions();
@@ -71,9 +48,12 @@ export default function Catalog() {
   };
 
   const handleCardDoubleClick = (taskId) => {
-    const imageData = localStorage.getItem(`slice_image_${taskId}`);
-    if (imageData) {
-      navigate(`/editor/${taskId}`);
+    // Check if the prediction has results - if so, navigate to editor
+    const prediction = predictions.find(p => p.task_id === taskId);
+    if (prediction && prediction.status === 'completed') {
+      // For now, show message since we're using memory-only storage
+      alert('Image is in memory. Navigate to editor to view.');
+      // TODO: Implement passing image data via state/navigation if needed
     } else {
       alert('Image not found. Please re-upload the image.');
     }
@@ -87,8 +67,6 @@ export default function Catalog() {
 
   const handleDeleteConfirm = () => {
     console.log('Delete task:', selectedTaskId);
-    // Also remove from localStorage
-    localStorage.removeItem(`slice_image_${selectedTaskId}`);
     setPredictions(predictions.filter(p => p.task_id !== selectedTaskId));
     setSelectedTaskId(null);
     setShowDeleteModal(false);
