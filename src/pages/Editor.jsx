@@ -419,7 +419,7 @@ export default function Editor() {
       const ctx = canvas.getContext('2d');
 
       const originalFilename = imageData.filename.replace(/\.[^/.]+$/, '');
-      const detectedClasses = new Set();
+      const detectedClasses = new Map();
 
       for (let i = 0; i < detections.length; i++) {
         const detection = detections[i];
