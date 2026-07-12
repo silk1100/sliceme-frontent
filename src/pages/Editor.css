@@ -150,6 +150,15 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+.save-error {
+  font-size: 12px;
+  color: #e74c3c;
+  text-align: center;
+  padding: 4px 8px;
+  background: rgba(231, 76, 60, 0.1);
+  border-radius: 4px;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }

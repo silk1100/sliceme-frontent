@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../hooks/useAuth';
+import { setItem as sessionSet, getItem as sessionGet } from '../lib/sessionStore';
 import './Upload.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
-const STORAGE_KEY = 'slice_uploads';
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -24,32 +24,28 @@ export default function Upload() {
   const navigate = useNavigate();
   const { session, loading: authLoading } = useAuth();
 
-  // COMMENTED OUT - Using memory-only storage (localStorage quota exceeded issue)
-  // Load saved uploads from localStorage on mount
-  // useEffect(() => {
-  //   const saved = localStorage.getItem(STORAGE_KEY);
-  //   if (saved) {
-  //     try {
-  //       const parsed = JSON.parse(saved);
-  //       if (Array.isArray(parsed) && parsed.length > 0) {
-  //         console.log('[UPLOAD] Restored uploads from localStorage:', parsed.length);
-  //         setUploads(parsed);
-  //       }
-  //     } catch (e) {
-  //       console.error('[UPLOAD] Failed to load saved uploads:', e);
-  //     }
-  //   }
-  // }, []);
+  // Track latest uploads in a ref for save-on-unmount
+  const uploadsRef = useRef(uploads);
+  uploadsRef.current = uploads;
 
-  // COMMENTED OUT - Using memory-only storage (localStorage quota exceeded issue)
-  // Save uploads to localStorage whenever they change
-  // useEffect(() => {
-  //   if (uploads.length > 0) {
-  //     localStorage.setItem(STORAGE_KEY, JSON.stringify(uploads));
-  //   } else {
-  //     localStorage.removeItem(STORAGE_KEY);
-  //   }
-  // }, [uploads]);
+  // Save uploads to session store on unmount (captures the latest state)
+  useEffect(() => {
+    return () => {
+      if (uploadsRef.current.length > 0) {
+        sessionSet('__upload_state', uploadsRef.current);
+      }
+    };
+  }, []);
+
+  // Restore uploads from session store on mount
+  useEffect(() => {
+    (async () => {
+      const restored = await sessionGet('__upload_state');
+      if (restored && restored.length > 0) {
+        setUploads(restored);
+      }
+    })();
+  }, []);
 
   // Timer update - runs every second
   useEffect(() => {
@@ -67,89 +63,58 @@ export default function Upload() {
     return () => clearInterval(interval);
   }, []);
 
-  // Polling effect - runs every 1.5s for processing uploads
-  // Use a ref to track if interval is already set
+  // Polling effect - runs every 1.5s while processing uploads exist
   const intervalRef = useRef(null);
+  const processingCount = uploads.filter(u => u.status === 'processing' && u.taskId).length;
 
   useEffect(() => {
-    console.log('[POLL] Effect triggered. authLoading:', authLoading);
-    
-    // Don't run if auth is loading
-    if (authLoading) {
+    if (authLoading) return;
+
+    if (processingCount === 0) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
-    // If interval already running, don't create another
-    if (intervalRef.current) {
-      console.log('[POLL] Interval already running');
-      return;
-    }
+    if (intervalRef.current) return;
 
-    console.log('[POLL] Setting up interval...');
-    
     intervalRef.current = setInterval(async () => {
-      console.log('[POLL] Interval tick');
-      
-      // Get current session and uploads directly from state
       setUploads(currentUploads => {
         const token = session?.access_token;
-        
-        if (!token) {
-          console.log('[POLL] No token in interval callback');
-          return currentUploads;
-        }
+        if (!token) return currentUploads;
 
         const currentProcessing = currentUploads.filter(
           u => u.status === 'processing' && u.taskId
         );
-        
-        console.log('[POLL] Current processing:', currentProcessing.length);
-        
-        if (currentProcessing.length === 0) {
-          return currentUploads;
-        }
 
-        // Make API calls for each processing upload
+        if (currentProcessing.length === 0) return currentUploads;
+
         currentProcessing.forEach(async (upload) => {
-          console.log('[POLL] Checking task:', upload.taskId);
-          
           try {
             const response = await fetch(
               `${API_URL}/task/${upload.taskId}`,
               { headers: { Authorization: `Bearer ${token}` }}
             );
 
-            console.log('[POLL] Response status:', response.status);
-
             if (!response.ok) return;
 
             const data = await response.json();
-            console.log('[POLL] Task status:', data.status);
 
             if (data.status === 'SUCCESS' && data.result) {
-              console.log('[POLL] SUCCESS for task:', upload.taskId);
-              
-              const imageData = {
+              await sessionSet(upload.taskId, {
+                taskId: upload.taskId,
                 imageDataUrl: upload.imageDataUrl,
                 filename: upload.file?.name || 'unknown.png',
                 result: data.result,
                 createdAt: new Date().toISOString()
-              };
-
-              // REMOVED - Using memory-only storage (localStorage quota exceeded issue)
-              // The image data stays in React state instead
-              // try {
-              //   localStorage.setItem(`slice_image_${upload.taskId}`, JSON.stringify(imageData));
-              // } catch (e) {
-              //   console.warn('[POLL] localStorage error:', e);
-              // }
-
-              // Update this specific upload to success
-              setUploads(prev => prev.map(u => 
+              });
+              setUploads(prev => prev.map(u =>
                 u.id === upload.id ? { ...u, status: 'success', result: data.result } : u
               ));
             } else if (data.status === 'FAILURE') {
-              setUploads(prev => prev.map(u => 
+              setUploads(prev => prev.map(u =>
                 u.id === upload.id ? { ...u, status: 'error', error: data.error || 'Failed' } : u
               ));
             }
@@ -163,13 +128,12 @@ export default function Upload() {
     }, 1500);
 
     return () => {
-      console.log('[POLL] Cleaning up interval');
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [authLoading]); // Only depend on authLoading - session and uploads accessed inside
+  }, [authLoading, processingCount]);
 
   // Paste handler
   useEffect(() => {

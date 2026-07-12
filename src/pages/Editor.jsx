@@ -4,6 +4,7 @@ import JSZip from 'jszip';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../hooks/useAuth';
 import { updateDetections } from '../lib/api';
+import { getItem as sessionGet } from '../lib/sessionStore';
 import './Editor.css';
 
 const HANDLE_THRESHOLD = 10;
@@ -24,6 +25,7 @@ export default function Editor() {
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   // Drag state
   const [dragState, setDragState] = useState({
@@ -62,42 +64,26 @@ export default function Editor() {
       return;
     }
 
-    // Fall back to localStorage (for backward compatibility)
-    const stored = localStorage.getItem(`slice_image_${taskId}`);
-    if (!stored) {
-      setError('Image not found. Using memory-only storage - please use Editor in the same session after uploading.');
+    // Fall back to session store
+    (async () => {
+      const sessionData = await sessionGet(taskId);
+      if (sessionData) {
+        setImageData(sessionData);
+        setDetections(sessionData.result?.detections || []);
+
+        const visibility = {};
+        (sessionData.result?.detections || []).forEach((_, idx) => {
+          visibility[idx] = true;
+        });
+        setVisibleBoxes(visibility);
+        setLoading(false);
+        return;
+      }
+
+      setError('Image not found. Please upload the image first.');
       setLoading(false);
-      return;
-    }
-
-    try {
-      const data = JSON.parse(stored);
-      setImageData(data);
-      setDetections(data.result?.detections || []);
-
-      const visibility = {};
-      (data.result?.detections || []).forEach((_, idx) => {
-        visibility[idx] = true;
-      });
-      setVisibleBoxes(visibility);
-    } catch (e) {
-      setError('Failed to load image data.');
-    }
-
-    setLoading(false);
+    })();
   }, [taskId, passedData]);
-
-  // Draw canvas when data changes
-  useEffect(() => {
-    if (!imageData || !canvasRef.current) return;
-
-    const img = new Image();
-    img.onload = () => {
-      imageRef.current = img;
-      drawCanvas();
-    };
-    img.src = imageData.imageDataUrl;
-  }, [imageData, detections, visibleBoxes, selectedIndex, hoverState]);
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -163,6 +149,23 @@ export default function Editor() {
       ctx.fillText(detection.class_name, box.x1, box.y1 - 5);
     });
   }, [detections, visibleBoxes, selectedIndex, hoverState, dragState]);
+
+  // Draw canvas when data changes
+  useEffect(() => {
+    if (!imageData || !canvasRef.current) return;
+
+    if (imageRef.current) {
+      drawCanvas();
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      imageRef.current = img;
+      drawCanvas();
+    };
+    img.src = imageData.imageDataUrl;
+  }, [imageData, detections, visibleBoxes, selectedIndex, hoverState]);
 
   // Get canvas coordinates from mouse event
   const getCanvasCoords = (e) => {
@@ -348,20 +351,7 @@ export default function Editor() {
     //   console.error('Failed to save to localStorage:', e);
     // }
 
-    // Send to backend
-    if (session?.access_token) {
-      setSaving(true);
-      try {
-        await updateDetections(session.access_token, taskId, detections);
-        console.log('Saved detections to backend');
-      } catch (e) {
-        console.error('Failed to save to backend:', e);
-      } finally {
-        setSaving(false);
-      }
-    }
-
-    // Reset drag state
+    // Reset drag state immediately (before async save) so handleMouseMove stops processing drag
     setDragState({
       isDragging: false,
       isResizing: false,
@@ -371,6 +361,20 @@ export default function Editor() {
       startY: 0,
       startBox: null
     });
+
+    // Send to backend
+    if (session?.access_token) {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await updateDetections(session.access_token, taskId, detections);
+      } catch (e) {
+        console.error('Failed to save to backend:', e);
+        setSaveError('Failed to save changes');
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
   // Handle mouse leave
@@ -544,6 +548,7 @@ export default function Editor() {
           </div>
 
           <div className="sidebar-actions">
+            {saveError && <div className="save-error">{saveError}</div>}
             {saving && <div className="saving-indicator">Saving...</div>}
             <button
               className="download-btn"

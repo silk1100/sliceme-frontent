@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import DeleteModal from '../components/DeleteModal';
 import { useAuth } from '../hooks/useAuth';
 import { fetchPredictions } from '../lib/api';
+import { getItem as sessionGet } from '../lib/sessionStore';
 import './Catalog.css';
 
 export default function Catalog() {
@@ -47,15 +48,18 @@ export default function Catalog() {
     setSelectedTaskId(selectedTaskId === taskId ? null : taskId);
   };
 
-  const handleCardDoubleClick = (taskId) => {
-    // Check if the prediction has results - if so, navigate to editor
-    const prediction = predictions.find(p => p.task_id === taskId);
-    if (prediction && prediction.status === 'completed') {
-      // For now, show message since we're using memory-only storage
-      alert('Image is in memory. Navigate to editor to view.');
-      // TODO: Implement passing image data via state/navigation if needed
+  const handleCardDoubleClick = async (taskId) => {
+    const sessionData = await sessionGet(taskId);
+    if (sessionData) {
+      navigate(`/editor/${taskId}`, {
+        state: {
+          imageDataUrl: sessionData.imageDataUrl,
+          filename: sessionData.filename,
+          result: sessionData.result
+        }
+      });
     } else {
-      alert('Image not found. Please re-upload the image.');
+      alert('Image not available in this session. Please upload again.');
     }
   };
 
